@@ -7,7 +7,7 @@ export class ModuleGroup {
   constructor(private readonly order: number) {}
 
   public buildGroup(internalConfig: RegExp[]) {
-    this._nodes.sort((a, b) => a.getSourceName().localeCompare(b.getSourceName()));
+    this._nodes.sort((a, b) => a.getSourceName().toLowerCase().localeCompare(b.getSourceName().toLowerCase()));
     let nodesCopy = this._nodes.slice();
     const result: Node[] = [];
     internalConfig.forEach((regexp) => {
@@ -16,6 +16,9 @@ export class ModuleGroup {
       nodesCopy = falsy;
     });
     result.push(...nodesCopy);
+    if (result.length === 0) {
+      return result;
+    }
     result.push(this.getLineBreak());
     return result;
   }

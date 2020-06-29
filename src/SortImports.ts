@@ -1,6 +1,7 @@
-import { ImportModule } from "./ImportModule";
+import { isModuleNode } from "./Modules";
 import { ModuleGroup } from "./ModuleGroup";
 import { Node } from "./types/Node";
+import { toAst, getAllImportNodes, replaceImportsWith, fromAst } from "./parser";
 
 const config = [
   {
@@ -10,28 +11,29 @@ const config = [
   },
   {
     order: 4,
-    test: /\.[a-zA-Z]+$/,
+    test: /^\.[a-zA-Z]+$/,
     internal: [/\.[^css]+$/, /(css | less | styl | scss | sass)$/],
+  },
+  {
+    order: 2,
+    test: /^(\.\.\/)/,
   },
   {
     order: 3,
     test: /^\.\//,
   },
   {
-    order: 2,
-    test: /^\.\.\//,
-  },
-  {
     test: /.*/,
   },
 ];
 
-export function sortImports(nodes: ImportModule[]): Node[] {
+export function sortImports(nodes: Node[]): Node[] {
   const moduleGroups = Array.from({ length: config.length }, (_v, i) => {
     return new ModuleGroup(i + 1);
   });
   nodes.forEach((node) => {
-    const configEntry = config.find(({ test }) => test.test(node.getSourceName()));
+    const name = node.getSourceName();
+    const configEntry = config.find(({ test }) => test.test(name));
     const order = configEntry?.order || moduleGroups.length;
     moduleGroups[order - 1].addModule(node);
   });
@@ -43,8 +45,8 @@ export function sortImports(nodes: ImportModule[]): Node[] {
   return finalModules;
 }
 
-export function hasImportsStructureChanged(initial: ImportModule[], current: Node[]): boolean {
-  const currentImportNodes = current.filter((node) => node instanceof ImportModule) as ImportModule[];
+export function hasImportsStructureChanged(initial: Node[], current: Node[]): boolean {
+  const currentImportNodes = current.filter(isModuleNode) as Node[];
   if (currentImportNodes.length !== initial.length) {
     throw new Error("Change of length in import modules");
   }
@@ -57,3 +59,39 @@ export function hasImportsStructureChanged(initial: ImportModule[], current: Nod
   }
   return false;
 }
+
+function fullProcess(code: string): string {
+  let ast = toAst(code);
+  const nodes = sortImports(getAllImportNodes(ast!));
+  return fromAst(replaceImportsWith(ast!, nodes));
+}
+
+fullProcess(`
+const React = require('react');
+const {
+  set,
+  get,
+  post
+} = require('./util');
+const x = 1;
+import Picture from '../../images/pic.png';
+const {Button} = require('./Button');
+const MyC = () => {
+  return <Button>hello</Button>;
+};
+`); // ?
+
+// fullProcess(`
+// import React from 'react';
+// import {
+//   set,
+//   get,
+//   post
+// } from './util';
+// const x = 1;
+// import Picture from '../../images/pic.png';
+// import {Button} from './Button';
+// const MyC = () => {
+//   return <Button>hello</Button>;
+// };
+// `); // ?

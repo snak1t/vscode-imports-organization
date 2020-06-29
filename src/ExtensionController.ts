@@ -1,8 +1,8 @@
 import * as vscode from "vscode";
 import { toAst, getAllImportNodes, replaceImportsWith, fromAst } from "./parser";
-import { sortImports as groupNodes, hasImportsStructureChanged } from "./SortImports";
-import { ImportModule } from "./ImportModule";
+import { sortImports, hasImportsStructureChanged } from "./SortImports";
 import { File } from "@babel/types";
+import { Node } from "./types/Node";
 
 export class ExtensionController implements vscode.Disposable {
   disposable?: vscode.Disposable;
@@ -10,7 +10,7 @@ export class ExtensionController implements vscode.Disposable {
   constructor() {
     this.disposable = vscode.workspace.onDidSaveTextDocument((textDocument: vscode.TextDocument) => {
       const textContent = textDocument.getText();
-      const file = this.prepareCodeSource(textContent);
+      const file = toAst(textContent);
       if (file === null) {
         return;
       }
@@ -36,13 +36,8 @@ export class ExtensionController implements vscode.Disposable {
       });
     });
   }
-
-  prepareCodeSource(code: string): File | null {
-    return toAst(code);
-  }
-
-  processImportNodes(file: File, importNodes: ImportModule[]): [false] | [true, string] {
-    const nodes = groupNodes(importNodes);
+  processImportNodes(file: File, importNodes: Node[]): [false] | [true, string] {
+    const nodes = sortImports(importNodes);
     const hasChanged = hasImportsStructureChanged(importNodes, nodes);
     if (hasChanged) {
       return [true, fromAst(replaceImportsWith(file, nodes))]; // ?

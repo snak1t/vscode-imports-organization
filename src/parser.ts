@@ -3,7 +3,7 @@ import * as t from "@babel/types";
 import { transformFromAstSync } from "@babel/core";
 
 import traverse from "@babel/traverse";
-import { ImportModule } from "./ImportModule";
+import { createNode, isModuleStatement } from "./Modules";
 import { Node } from "./types/Node";
 
 export const parsingOptions = {
@@ -21,15 +21,19 @@ export function toAst(code: string): t.File | null {
   try {
     return codeToAst(code);
   } catch (error) {
-    console.error(error.message);
     return null;
   }
 }
 
-export function getAllImportNodes(ast: t.File): ImportModule[] {
+export function getAllImportNodes(ast: t.File): Node[] {
   try {
-    const importNodes = ast.program.body.filter((imp) => t.isImportDeclaration(imp)) as t.ImportDeclaration[];
-    return importNodes.map((node) => new ImportModule(node));
+    return ast.program.body.reduce((importModules, statement) => {
+      const node = createNode(statement);
+      if (node) {
+        importModules.push(node);
+      }
+      return importModules;
+    }, [] as Node[]);
   } catch (error) {
     return [];
   }
@@ -37,17 +41,23 @@ export function getAllImportNodes(ast: t.File): ImportModule[] {
 
 export function replaceImportsWith(ast: t.File, nodes: Node[]): t.File {
   traverse(ast, {
-    ImportDeclaration(path) {
-      path.getAllNextSiblings().forEach((x) => x.remove());
-      const x: t.Node[] = nodes.map((imd) => imd.makeNode());
-      path.replaceWithMultiple(x);
-
-      path.stop();
+    enter(path) {
+      if (isModuleStatement(path.node)) {
+        path.getAllNextSiblings().forEach((x) => x.remove());
+        const x: t.Node[] = nodes.map((imd) => imd.makeNode());
+        path.replaceWithMultiple(x);
+        path.stop();
+      }
     },
   });
   return ast;
 }
 
 export function fromAst(ast: t.File): string {
-  return transformFromAstSync(ast)?.code ?? "";
+  const code = transformFromAstSync(ast)?.code ?? "";
+  return code
+    .split("\n")
+    .filter((x) => x.trim() !== "")
+    .map((x) => (x.trim() === "/*TOBEDELETED*/" ? "" : x))
+    .join("\n");
 }

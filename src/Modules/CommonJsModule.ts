@@ -1,12 +1,39 @@
 import * as t from "@babel/types";
 import { Node } from "../types/Node";
 
+const isMemberOrCallExpression = (expression: t.Expression): expression is t.MemberExpression | t.CallExpression => {
+  return t.isCallExpression(expression) || t.isMemberExpression(expression);
+};
+
+const findRequireCallExpression = (declarator: t.VariableDeclarator): t.CallExpression | null => {
+  if (declarator.init === null || !isMemberOrCallExpression(declarator.init)) {
+    return null;
+  }
+  let expression = declarator.init;
+  while (true) {
+    if (t.isMemberExpression(expression) && isMemberOrCallExpression(expression.object)) {
+      expression = expression.object;
+    } else if (t.isCallExpression(expression)) {
+      if (isMemberOrCallExpression(expression.callee as t.Expression)) {
+        expression = expression.callee as t.MemberExpression | t.CallExpression;
+      } else if (t.isIdentifier(expression.callee) && expression.callee.name === "require") {
+        return expression;
+      } else {
+        return null;
+      }
+    } else {
+      return null;
+    }
+  }
+};
+
 export class CommonJsModule implements Node {
   constructor(private readonly statement: t.Statement) {}
 
   getSourceName(): string {
     if (CommonJsModule.isVariableDeclaration(this.statement)) {
-      return ((this.statement.declarations[0].init as t.CallExpression).arguments[0] as any).value as string;
+      const node = findRequireCallExpression(this.statement.declarations[0]);
+      return (node?.arguments[0] as any).value as string;
     }
     return "";
   }
@@ -27,11 +54,7 @@ export class CommonJsModule implements Node {
       return false;
     }
     return inspectedStatement.declarations.every((declarator) => {
-      if (!t.isCallExpression(declarator.init)) {
-        return false;
-      }
-      const name = (declarator.init.callee as any).name as string;
-      return name === "require";
+      return findRequireCallExpression(declarator) !== null;
     });
   }
 

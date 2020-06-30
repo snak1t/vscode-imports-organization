@@ -1,8 +1,7 @@
-import * as vscode from "vscode";
-import { isModuleNode } from "./Modules";
 import { ModuleGroup } from "./ModuleGroup";
 import { Node } from "./types/Node";
 import { ConfigEntry } from "./Config";
+import { EmptyLine } from "./EmptyLine";
 
 export function sortImports(nodes: Node[], config: ConfigEntry[]): Node[] {
   const moduleGroups = Array.from({ length: config.length }, (_v, i) => {
@@ -23,7 +22,7 @@ export function sortImports(nodes: Node[], config: ConfigEntry[]): Node[] {
 }
 
 export function hasImportsStructureChanged(initial: Node[], current: Node[]): boolean {
-  const currentImportNodes = current.filter(isModuleNode) as Node[];
+  const currentImportNodes = current.filter((node) => !(node instanceof EmptyLine)) as Node[];
   if (currentImportNodes.length !== initial.length) {
     throw new Error("Change of length in import modules");
   }

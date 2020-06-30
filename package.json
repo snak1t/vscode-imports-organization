@@ -39,8 +39,9 @@
           "default": [
             {
               "order": 1,
-              "test": "^[\\@a-zA-Z]+",
+              "test": "package",
               "internalOrder": [
+                "core",
                 "^react$",
                 "^@.+",
                 "^react"
@@ -52,14 +53,19 @@
             },
             {
               "order": 2,
-              "test": "^(\\.\\./)"
+              "test": "parent"
             },
             {
               "order": 3,
-              "test": "^\\./"
+              "test": "sibling"
             },
             {
-              "test": ".*/"
+              "test": "all",
+              "internalOrder": [
+                "image",
+                "style",
+                "\\.atoms\\."
+              ]
             }
           ],
           "items": {

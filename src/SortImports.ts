@@ -9,7 +9,7 @@ export function sortImports(nodes: Node[], config: ConfigEntry[]): Node[] {
   });
   nodes.forEach((node) => {
     const name = node.getSourceName();
-    const configEntry = config.find(({ test }) => test.test(name));
+    const configEntry = config.find(({ test }) => test(name));
     const order = configEntry?.order || moduleGroups.length;
     moduleGroups[order - 1].addModule(node);
   });

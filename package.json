@@ -16,7 +16,67 @@
     "onLanguage:javascriptreact"
   ],
   "main": "./out/extension.js",
-  "contributes": {},
+  "contributes": {
+    "configuration": {
+      "title": "Imports Organizator",
+      "properties": {
+        "import-organizer.sortOrder": {
+          "type": "array",
+          "scope": "resource",
+          "description": "List of sorting rules.",
+          "default": [
+            {
+              "order": 1,
+              "test": "^[\\@a-zA-Z]+",
+              "internalOrder": [
+                "^react$",
+                "^@.+",
+                "^react"
+              ]
+            },
+            {
+              "order": 4,
+              "test": "^\\.[a-zA-Z]+$"
+            },
+            {
+              "order": 2,
+              "test": "^(\\.\\./)"
+            },
+            {
+              "order": 3,
+              "test": "^\\./"
+            },
+            {
+              "test": ".*/"
+            }
+          ],
+          "items": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "order": {
+                    "type": "number",
+                    "description": "Applied order of element"
+                  },
+                  "test": {
+                    "type": "string",
+                    "description": "regexp"
+                  },
+                  "internalOrder": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
   "scripts": {
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",

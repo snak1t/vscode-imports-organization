@@ -3,11 +3,12 @@ import { toAst, getAllImportNodes, replaceImportsWith, fromAst } from "./parser"
 import { sortImports, hasImportsStructureChanged } from "./SortImports";
 import { File } from "@babel/types";
 import { Node } from "./types/Node";
+import { Config } from "./Config";
 
 export class ExtensionController implements vscode.Disposable {
   disposable?: vscode.Disposable;
 
-  constructor() {
+  constructor(private readonly config: Config) {
     this.disposable = vscode.workspace.onDidSaveTextDocument((textDocument: vscode.TextDocument) => {
       const textContent = textDocument.getText();
       const file = toAst(textContent);
@@ -37,7 +38,7 @@ export class ExtensionController implements vscode.Disposable {
     });
   }
   processImportNodes(file: File, importNodes: Node[]): [false] | [true, string] {
-    const nodes = sortImports(importNodes);
+    const nodes = sortImports(importNodes, this.config.getConfiguration());
     const hasChanged = hasImportsStructureChanged(importNodes, nodes);
     if (hasChanged) {
       return [true, fromAst(replaceImportsWith(file, nodes))]; // ?

@@ -17,6 +17,18 @@
   ],
   "main": "./out/extension.js",
   "contributes": {
+    "commands": [
+      {
+        "title": "Disable imports sorting",
+        "category": "Imports Organizer",
+        "command": "import-organizer.disable"
+      },
+      {
+        "title": "Enable imports sorting",
+        "category": "Imports Organizer",
+        "command": "import-organizer.enable"
+      }
+    ],
     "configuration": {
       "title": "Imports Organizator",
       "properties": {
@@ -94,7 +106,6 @@
     "@types/babel-types": "^7.0.4",
     "@types/glob": "^7.1.1",
     "@types/jest": "^26.0.3",
-    "@types/mocha": "^7.0.2",
     "@types/node": "^13.11.0",
     "@types/vscode": "^1.46.0",
     "@typescript-eslint/eslint-plugin": "^2.30.0",

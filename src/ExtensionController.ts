@@ -5,11 +5,16 @@ import { File } from "@babel/types";
 import { Node } from "./types/Node";
 import { Config } from "./Config";
 
+const DISABLE_KEYWORD = "imports-organization: disable";
+
 export class ExtensionController implements vscode.Disposable {
-  disposable?: vscode.Disposable;
+  disposables: vscode.Disposable[] = [];
 
   constructor(private readonly config: Config) {
-    this.disposable = vscode.workspace.onDidSaveTextDocument((textDocument: vscode.TextDocument) => {
+    let onDidSaveDisposable = vscode.workspace.onDidSaveTextDocument((textDocument: vscode.TextDocument) => {
+      if (this.isExtensionDisabledForDocument(textDocument)) {
+        return;
+      }
       const textContent = textDocument.getText();
       const file = toAst(textContent);
       if (file === null) {
@@ -27,7 +32,7 @@ export class ExtensionController implements vscode.Disposable {
         textDocument.lineAt(lastImportsLineOfOriginalText).range.end
       );
 
-      let eol = textDocument.eol === 1 ? "\n" : "\r\n";
+      let eol = this.getCurrentEOL(textDocument);
       if (textDocument.lineAt(lastImportsLineOfOriginalText + 1).isEmptyOrWhitespace) {
         eol = "";
       }
@@ -36,8 +41,57 @@ export class ExtensionController implements vscode.Disposable {
         textDocument.save();
       });
     });
+    this.registerCommands();
+    this.disposables.push(onDidSaveDisposable);
   }
-  processImportNodes(file: File, importNodes: Node[]): [false] | [true, string] {
+
+  private getCurrentEOL(textDocument: vscode.TextDocument): string {
+    return textDocument.eol === 1 ? "\n" : "\r\n";
+  }
+
+  private registerCommands(): void {
+    this.disposables.push(
+      vscode.commands.registerCommand("import-organizer.disable", this.disableActiveFile),
+      vscode.commands.registerCommand("import-organizer.enable", this.enableActiveFile)
+    );
+  }
+
+  private disableActiveFile = () => {
+    const wEdit = new vscode.WorkspaceEdit();
+    const textEditor = vscode.window.activeTextEditor;
+    if (!textEditor) {
+      return;
+    }
+    wEdit.insert(
+      textEditor.document.uri,
+      new vscode.Position(0, 0),
+      `// ${DISABLE_KEYWORD}${this.getCurrentEOL(textEditor.document)}`
+    );
+    vscode.workspace.applyEdit(wEdit).then(() => {
+      textEditor.document.save();
+    });
+  };
+
+  private enableActiveFile = () => {
+    const wEdit = new vscode.WorkspaceEdit();
+    const textEditor = vscode.window.activeTextEditor;
+    if (!textEditor) {
+      return;
+    }
+    for (let index = 0; index < textEditor.document.lineCount; index++) {
+      const line = textEditor.document.lineAt(index).text;
+      if (!line.includes(DISABLE_KEYWORD)) {
+        continue;
+      }
+      wEdit.delete(textEditor.document.uri, new vscode.Range(index, 0, index + 1, 0));
+      vscode.workspace.applyEdit(wEdit).then(() => {
+        textEditor.document.save();
+      });
+      return;
+    }
+  };
+
+  private processImportNodes(file: File, importNodes: Node[]): [false] | [true, string] {
     const nodes = sortImports(importNodes, this.config.getConfiguration());
     const hasChanged = hasImportsStructureChanged(importNodes, nodes);
     if (hasChanged) {
@@ -46,7 +100,11 @@ export class ExtensionController implements vscode.Disposable {
     return [false];
   }
 
+  private isExtensionDisabledForDocument(textDocument: vscode.TextDocument): boolean {
+    return textDocument.getText().includes(DISABLE_KEYWORD);
+  }
+
   dispose() {
-    this.disposable && this.disposable.dispose();
+    this.disposables.forEach((x) => x.dispose());
   }
 }

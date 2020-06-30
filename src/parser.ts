@@ -43,6 +43,9 @@ export function replaceImportsWith(ast: t.File, nodes: Node[]): t.File {
   traverse(ast, {
     enter(path) {
       if (isModuleStatement(path.node)) {
+        // remove all next siblings (on the same level)
+        // all previous elements will remain as is
+        // like comments, esling disable statement or etc.
         path.getAllNextSiblings().forEach((x) => x.remove());
         const x: t.Node[] = nodes.map((imd) => imd.makeNode());
         path.replaceWithMultiple(x);

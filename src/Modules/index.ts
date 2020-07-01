@@ -1,7 +1,9 @@
 import * as t from "@babel/types";
-import { EsModule } from "./EsModule";
+
 import { Node } from "../types/Node";
+
 import { CommonJsModule } from "./CommonJsModule";
+import { EsModule } from "./EsModule";
 
 export const createNode = (statement: t.Statement): Node | null => {
   if (EsModule.is(statement)) {

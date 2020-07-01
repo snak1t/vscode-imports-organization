@@ -53,7 +53,7 @@ export class CommonJsModule implements Node {
     if (!t.isVariableDeclaration(inspectedStatement)) {
       return false;
     }
-    return inspectedStatement.declarations.every((declarator) => {
+    return inspectedStatement.declarations.every(declarator => {
       return findRequireCallExpression(declarator) !== null;
     });
   }

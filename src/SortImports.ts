@@ -1,13 +1,13 @@
-import { ModuleGroup } from "./ModuleGroup";
-import { Node } from "./types/Node";
 import { ConfigEntry } from "./Config";
 import { EmptyLine } from "./EmptyLine";
+import { ModuleGroup } from "./ModuleGroup";
+import { Node } from "./types/Node";
 
 export function sortImports(nodes: Node[], config: ConfigEntry[]): Node[] {
   const moduleGroups = Array.from({ length: config.length }, (_v, i) => {
     return new ModuleGroup(i + 1);
   });
-  nodes.forEach((node) => {
+  nodes.forEach(node => {
     const name = node.getSourceName();
     const configEntry = config.find(({ test }) => test(name));
     const order = configEntry?.order || moduleGroups.length;
@@ -15,14 +15,14 @@ export function sortImports(nodes: Node[], config: ConfigEntry[]): Node[] {
   });
   let finalModules: Node[] = [];
   moduleGroups.forEach((group, index) => {
-    const cfg = config.find((cfg) => cfg.order === index + 1);
+    const cfg = config.find(cfg => cfg.order === index + 1);
     finalModules.push(...group.buildGroup(cfg?.internalOrder ?? []));
   });
   return finalModules;
 }
 
 export function hasImportsStructureChanged(initial: Node[], current: Node[]): boolean {
-  const currentImportNodes = current.filter((node) => !(node instanceof EmptyLine)) as Node[];
+  const currentImportNodes = current.filter(node => !(node instanceof EmptyLine)) as Node[];
   if (currentImportNodes.length !== initial.length) {
     throw new Error("Change of length in import modules");
   }

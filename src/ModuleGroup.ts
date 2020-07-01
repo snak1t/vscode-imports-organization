@@ -11,8 +11,8 @@ export class ModuleGroup {
     this._nodes.sort((a, b) => a.getSourceName().toLowerCase().localeCompare(b.getSourceName().toLowerCase()));
     let nodesCopy = this._nodes.slice();
     const result: Node[] = [];
-    internalConfig.forEach((testFn) => {
-      const [truthy, falsy] = partition<Node>(nodesCopy, (node) => testFn(node.getSourceName()));
+    internalConfig.forEach(testFn => {
+      const [truthy, falsy] = partition<Node>(nodesCopy, node => testFn(node.getSourceName()));
       result.push(...truthy);
       nodesCopy = falsy;
     });

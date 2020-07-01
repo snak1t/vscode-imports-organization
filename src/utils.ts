@@ -1,6 +1,6 @@
 export function flatten<T>(collection: T[][]): T[] {
   const x: T[] = [];
-  collection.forEach((c) => {
+  collection.forEach(c => {
     x.push(...c);
   });
   return x;

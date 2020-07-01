@@ -12,21 +12,21 @@ export type ConfigEntry = {
 const coreModules = require("module").builtinModules as string[];
 
 const configKeywordMap: Map<string, ConfigEntryTestFn> = new Map([
-  ["core", (source) => coreModules.includes(source)],
-  ["package", (source) => /^[\\@a-zA-Z]+/.test(source)],
-  ["parent", (source) => /^(\.\.\/)/.test(source)],
-  ["sibling", (source) => /^(\.\/)/.test(source)],
-  ["all", (source) => /.*/.test(source)],
+  ["core", source => coreModules.includes(source)],
+  ["package", source => /^[\\@a-zA-Z]+/.test(source)],
+  ["parent", source => /^(\.\.\/)/.test(source)],
+  ["sibling", source => /^(\.\/)/.test(source)],
+  ["all", source => /.*/.test(source)],
   [
     "style",
-    (source) =>
-      !!["css", "scss", "sass", "less", "styl"].find((styleExtension) => source.toLowerCase().endsWith(styleExtension)),
+    source =>
+      !!["css", "scss", "sass", "less", "styl"].find(styleExtension => source.toLowerCase().endsWith(styleExtension)),
   ],
   [
     "image",
-    (source) =>
-      !!["jpg", "jpeg", "png", "gif", "svg", "webp"].find((styleExtension) =>
-        source.toLowerCase().endsWith(styleExtension)
+    source =>
+      !!["jpg", "jpeg", "png", "gif", "svg", "webp"].find(styleExtension =>
+        source.toLowerCase().endsWith(styleExtension),
       ),
   ],
 ]);
@@ -44,7 +44,7 @@ export class Config implements Disposable {
   parseConfig() {
     try {
       const config = vscode.workspace.getConfiguration("import-organizer").get("sortOrder") as any[];
-      this._config = config.map((entry) => {
+      this._config = config.map(entry => {
         return {
           order: entry.order ?? config.length,
           test: this.createTestFn(entry.test),

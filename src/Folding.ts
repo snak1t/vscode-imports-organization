@@ -12,10 +12,10 @@ export class Folding implements Disposable {
     }
 
     this.disposables.push(
-      vscode.window.onDidChangeActiveTextEditor((editor) => {
+      vscode.window.onDidChangeActiveTextEditor(editor => {
         this.editor = editor;
         this.foldImports();
-      })
+      }),
     );
   }
 
@@ -28,6 +28,6 @@ export class Folding implements Disposable {
   }
 
   dispose() {
-    this.disposables.forEach((d) => d.dispose());
+    this.disposables.forEach(d => d.dispose());
   }
 }

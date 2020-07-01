@@ -29,7 +29,7 @@ export class ExtensionController implements vscode.Disposable {
       const lastImportsLineOfOriginalText = importNodes[importNodes.length - 1].getLinePositions()[1];
       const range = new vscode.Range(
         new vscode.Position(0, 0),
-        textDocument.lineAt(lastImportsLineOfOriginalText).range.end
+        textDocument.lineAt(lastImportsLineOfOriginalText).range.end,
       );
 
       let eol = this.getCurrentEOL(textDocument);
@@ -52,7 +52,7 @@ export class ExtensionController implements vscode.Disposable {
   private registerCommands(): void {
     this.disposables.push(
       vscode.commands.registerCommand("import-organizer.disable", this.disableActiveFile),
-      vscode.commands.registerCommand("import-organizer.enable", this.enableActiveFile)
+      vscode.commands.registerCommand("import-organizer.enable", this.enableActiveFile),
     );
   }
 
@@ -65,7 +65,7 @@ export class ExtensionController implements vscode.Disposable {
     wEdit.insert(
       textEditor.document.uri,
       new vscode.Position(0, 0),
-      `// ${DISABLE_KEYWORD}${this.getCurrentEOL(textEditor.document)}`
+      `// ${DISABLE_KEYWORD}${this.getCurrentEOL(textEditor.document)}`,
     );
     vscode.workspace.applyEdit(wEdit).then(() => {
       textEditor.document.save();
@@ -105,6 +105,6 @@ export class ExtensionController implements vscode.Disposable {
   }
 
   dispose() {
-    this.disposables.forEach((x) => x.dispose());
+    this.disposables.forEach(x => x.dispose());
   }
 }

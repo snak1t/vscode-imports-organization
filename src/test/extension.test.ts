@@ -46,9 +46,10 @@ describe("Extension ", () => {
       ast = toAst(`
         const sth = require('somewhere')
         require('./utils')
-        require('package-a').method();
-        require('package-b').member.method();
-        require('package-c').member.member;
+        require('pkg-a').method();
+        require('pkg-b').member.method();
+        require('pkg-c').member.member;
+        if(true){const a = require('./pkg-d')}
         const x = 1;
      `);
       expect(getAllImportNodes(ast!)).toHaveLength(5);

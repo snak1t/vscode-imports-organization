@@ -5,11 +5,11 @@ const isMemberOrCallExpression = (expression: t.Expression): expression is t.Mem
   return t.isCallExpression(expression) || t.isMemberExpression(expression);
 };
 
-const findRequireCallExpression = (declarator: t.VariableDeclarator): t.CallExpression | null => {
-  if (declarator.init === null || !isMemberOrCallExpression(declarator.init)) {
+const findRequireCallExpression = (expression: t.Expression | null): t.CallExpression | null => {
+  if (expression === null || !isMemberOrCallExpression(expression)) {
     return null;
   }
-  let expression = declarator.init;
+
   while (true) {
     if (t.isMemberExpression(expression) && isMemberOrCallExpression(expression.object)) {
       expression = expression.object;
@@ -28,37 +28,39 @@ const findRequireCallExpression = (declarator: t.VariableDeclarator): t.CallExpr
 };
 
 export class CommonJsModule implements Node {
-  constructor(private readonly statement: t.Statement) {}
+  constructor(private readonly statement: t.VariableDeclaration | t.ExpressionStatement) {}
 
   getSourceName(): string {
-    if (CommonJsModule.isVariableDeclaration(this.statement)) {
-      const node = findRequireCallExpression(this.statement.declarations[0]);
-      return (node?.arguments[0] as any).value as string;
-    }
-    return "";
+    const expression = t.isExpressionStatement(this.statement)
+      ? this.statement.expression
+      : this.statement.declarations[0].init;
+    const node = findRequireCallExpression(expression);
+    return (node?.arguments[0] as any).value as string;
   }
 
   makeNode(): t.Node {
-    if (CommonJsModule.isVariableDeclaration(this.statement)) {
+    if (t.isVariableDeclaration(this.statement)) {
       return t.variableDeclaration(this.statement.kind, this.statement.declarations);
     }
-    return t.noop();
+
+    return t.expressionStatement(this.statement.expression);
   }
 
   getLinePositions(): [number, number] {
     return [this.statement.loc?.start.line ?? 0, this.statement.loc?.end.line ?? 0];
   }
 
-  private static isVariableDeclaration(inspectedStatement: t.Statement): inspectedStatement is t.VariableDeclaration {
-    if (!t.isVariableDeclaration(inspectedStatement)) {
-      return false;
+  static is(inspectedStatement: t.Statement): inspectedStatement is t.VariableDeclaration | t.ExpressionStatement {
+    if (t.isVariableDeclaration(inspectedStatement)) {
+      return inspectedStatement.declarations.every(declarator => {
+        const expression = declarator.init;
+        return findRequireCallExpression(expression) !== null;
+      });
     }
-    return inspectedStatement.declarations.every(declarator => {
-      return findRequireCallExpression(declarator) !== null;
-    });
-  }
-
-  static is(inspectedStatement: t.Statement): boolean {
-    return CommonJsModule.isVariableDeclaration(inspectedStatement);
+    if (t.isExpressionStatement(inspectedStatement)) {
+      const expression = inspectedStatement.expression;
+      return findRequireCallExpression(expression) !== null;
+    }
+    return false;
   }
 }

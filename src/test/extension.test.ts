@@ -51,7 +51,6 @@ describe("Extension ", () => {
         require('package-c').member.member;
         const x = 1;
      `);
-      console.log(getAllImportNodes(ast!));
       expect(getAllImportNodes(ast!)).toHaveLength(5);
 
       ast = toAst(`

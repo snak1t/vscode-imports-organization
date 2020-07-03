@@ -1,3 +1,5 @@
+![CI status](https://github.com/snak1t/vscode-imports-organization/workflows/Node.js%20CI/badge.svg)
+
 # import-organizer README
 
 This is the README for your extension "import-organizer". After writing up a brief description, we recommend including the following sections.

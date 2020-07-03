@@ -1,14 +1,36 @@
 import * as t from "@babel/types";
+
+import { ConfigEntry } from "../Config";
 import { toAst, getAllImportNodes, fromAst, replaceImportsWith } from "../parser";
 import { sortImports } from "../SortImports";
 
+const config: ConfigEntry[] = [
+  {
+    order: 1,
+    test: source => /^[\@a-zA-Z]+/.test(source),
+    internalOrder: [source => source === "react"],
+  },
+  {
+    order: 4,
+    test: source => /^\.[a-zA-Z]+$/.test(source),
+  },
+  {
+    order: 2,
+    test: source => /^(\.\.\/)/.test(source),
+  },
+  {
+    order: 3,
+    test: source => /^(\.\/)/.test(source),
+  },
+  {
+    order: 5,
+    test: source => /.*/.test(source),
+  },
+];
+
 function fullProcess(code: string): string {
-  let ast = toAst(`
-  import xyz from 'xyz';
-  import abc from 'abc';
-  const x = 1;
-`);
-  const nodes = getAllImportNodes(ast!);
+  let ast = toAst(code);
+  const nodes = sortImports(getAllImportNodes(ast!), config);
   return fromAst(replaceImportsWith(ast!, nodes));
 }
 
@@ -100,13 +122,39 @@ describe("Extension ", () => {
       let code = `
 import xyz from 'xyz';
 import abc from 'abc';
-const x = 1;
-     `;
-      expect(fullProcess(code)).toEqual(`
-import abx from 'abc';
-import xyz from 'xyz';
-const x = 1;
-     `);
+const x = 1;`;
+      const result = fullProcess(code).split("\n");
+      expect(result).toEqual([`import abc from 'abc';`, `import xyz from 'xyz';`, ``]);
+    });
+
+    it("sort package imports in alphabetical order case 2", () => {
+      let code = `
+import React from 'react'
+import PropTypes from 'prop-types'
+import * as R from 'ramda'
+import { Col, FormGroup, Row } from 'react-bootstrap'
+import { FormattedMessage, injectIntl } from 'react-intl'
+import CustomerContactsForm from './CustomerContactsFormContainer'
+import { CA, CB } from '../../../components/ComponentA'
+import InfoMessage from '../../Messages/InfoMessage'
+import Field from '../../../components/ComponentA/Field'
+import { Link } from 'react-router'`;
+      const result = fullProcess(code).split("\n");
+      expect(result).toStrictEqual([
+        `import React from 'react';`,
+        `import PropTypes from 'prop-types';`,
+        `import * as R from 'ramda';`,
+        `import { Col, FormGroup, Row } from 'react-bootstrap';`,
+        `import { FormattedMessage, injectIntl } from 'react-intl';`,
+        `import { Link } from 'react-router';`,
+        ``,
+        `import { CA, CB } from '../../../components/ComponentA';`,
+        `import Field from '../../../components/ComponentA/Field';`,
+        `import InfoMessage from '../../Messages/InfoMessage';`,
+        ``,
+        `import CustomerContactsForm from './CustomerContactsFormContainer';`,
+        ``,
+      ]);
     });
   });
 });

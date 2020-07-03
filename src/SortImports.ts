@@ -1,9 +1,14 @@
-import { ConfigEntry } from "./Config";
+import { ConfigEntry, ModulesMixType } from "./Config";
 import { EmptyLine } from "./EmptyLine";
 import { ModuleGroup } from "./ModuleGroup";
+import { EsModule } from "./Modules/EsModule";
 import { Node } from "./types/Node";
+import { partition } from "./utils";
 
-export function sortImports(nodes: Node[], config: ConfigEntry[]): Node[] {
+function sortImportsGroup(nodes: Node[], config: ConfigEntry[]): Node[] {
+  if (nodes.length === 0) {
+    return [];
+  }
   const moduleGroups = Array.from({ length: config.length }, (_v, i) => {
     return new ModuleGroup(i + 1);
   });
@@ -19,6 +24,14 @@ export function sortImports(nodes: Node[], config: ConfigEntry[]): Node[] {
     finalModules.push(...group.buildGroup(cfg?.internalOrder ?? []));
   });
   return finalModules;
+}
+
+export function sortImports(nodes: Node[], config: ConfigEntry[], moduleGroupMixType: ModulesMixType): Node[] {
+  if (moduleGroupMixType === "mixed") {
+    return sortImportsGroup(nodes, config);
+  }
+  const [esModules, commonJsModules] = partition(nodes, node => node instanceof EsModule);
+  return [...sortImportsGroup(esModules, config), ...sortImportsGroup(commonJsModules, config)];
 }
 
 export function hasImportsStructureChanged(initial: Node[], current: Node[]): boolean {

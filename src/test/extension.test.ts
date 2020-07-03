@@ -1,6 +1,6 @@
 import * as t from "@babel/types";
 
-import { ConfigEntry } from "../Config";
+import { ConfigEntry, ModulesMixType } from "../Config";
 import { toAst, getAllImportNodes, fromAst, replaceImportsWith } from "../parser";
 import { sortImports } from "../SortImports";
 
@@ -28,9 +28,9 @@ const config: ConfigEntry[] = [
   },
 ];
 
-function fullProcess(code: string): string {
+function fullProcess(code: string, sortMixType: ModulesMixType = "es_to_top"): string {
   let ast = toAst(code);
-  const nodes = sortImports(getAllImportNodes(ast!), config);
+  const nodes = sortImports(getAllImportNodes(ast!), config, sortMixType);
   return fromAst(replaceImportsWith(ast!, nodes));
 }
 
@@ -153,6 +153,44 @@ import { Link } from 'react-router'`;
         `import InfoMessage from '../../Messages/InfoMessage';`,
         ``,
         `import CustomerContactsForm from './CustomerContactsFormContainer';`,
+        ``,
+      ]);
+    });
+
+    it("moves important statement above require by default", () => {
+      let code = `
+import React from 'react'
+const b = require('./image.png')
+const _ = require('lodash')
+import { MyComponent } from './MyComponent'
+const x = 1;`;
+      const result = fullProcess(code).split("\n");
+      expect(result).toStrictEqual([
+        `import React from 'react';`,
+        ``,
+        `import { MyComponent } from './MyComponent';`,
+        ``,
+        `const _ = require('lodash');`,
+        ``,
+        `const b = require('./image.png');`,
+        ``,
+      ]);
+    });
+
+    it("keep modules statement mixed with if option is provided", () => {
+      let code = `
+import React from 'react'
+const b = require('./image.png')
+const _ = require('lodash')
+import { MyComponent } from './MyComponent'
+const x = 1;`;
+      const result = fullProcess(code, "mixed").split("\n");
+      expect(result).toStrictEqual([
+        `import React from 'react';`,
+        `const _ = require('lodash');`,
+        ``,
+        `const b = require('./image.png');`,
+        `import { MyComponent } from './MyComponent';`,
         ``,
       ]);
     });

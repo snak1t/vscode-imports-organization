@@ -9,6 +9,8 @@ export type ConfigEntry = {
   internalOrder?: ConfigEntryTestFn[];
 };
 
+export type ModulesMixType = "mixed" | "es_to_top";
+
 const coreModules = require("module").builtinModules as string[];
 
 const configKeywordMap: Map<string, ConfigEntryTestFn> = new Map([
@@ -34,6 +36,8 @@ const configKeywordMap: Map<string, ConfigEntryTestFn> = new Map([
 export class Config implements Disposable {
   private _config: ConfigEntry[] = [];
   private disposable?: Disposable;
+  private _mixType: ModulesMixType = "mixed";
+
   constructor() {
     this.parseConfig();
     this.disposable = vscode.workspace.onDidChangeConfiguration(() => {
@@ -43,7 +47,9 @@ export class Config implements Disposable {
 
   parseConfig() {
     try {
-      const config = vscode.workspace.getConfiguration("import-organizer").get("sortOrder") as any[];
+      const configModule = vscode.workspace.getConfiguration("import-organizer");
+      const config = configModule.get("sortOrder") as any[];
+      this._mixType = configModule.get("mixType") as ModulesMixType;
       this._config = config.map(entry => {
         return {
           order: entry.order ?? config.length,
@@ -69,5 +75,9 @@ export class Config implements Disposable {
 
   getConfiguration(): ConfigEntry[] {
     return this._config;
+  }
+
+  public getMixType(): ModulesMixType {
+    return this._mixType;
   }
 }

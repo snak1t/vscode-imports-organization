@@ -31,7 +31,7 @@ const config: ConfigEntry[] = [
 function fullProcess(code: string, sortMixType: ModulesMixType = "es_to_top"): string {
   let ast = toAst(code);
   const nodes = sortImports(getAllImportNodes(ast!), config, sortMixType);
-  return fromAst(replaceImportsWith(ast!, nodes));
+  return fromAst(replaceImportsWith(ast!, nodes), code);
 }
 
 describe("Extension ", () => {

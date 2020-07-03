@@ -37,6 +37,7 @@ export class Config implements Disposable {
   private _config: ConfigEntry[] = [];
   private disposable?: Disposable;
   private _mixType: ModulesMixType = "mixed";
+  public isFormatOnSaveEnabled: boolean = false;
 
   constructor() {
     this.parseConfig();
@@ -50,6 +51,7 @@ export class Config implements Disposable {
       const configModule = vscode.workspace.getConfiguration("import-organizer");
       const config = configModule.get("sortOrder") as any[];
       this._mixType = configModule.get("mixType") as ModulesMixType;
+      this.isFormatOnSaveEnabled = vscode.workspace.getConfiguration("editor").get("formatOnSave") as boolean;
       this._config = config.map(entry => {
         return {
           order: entry.order ?? config.length,

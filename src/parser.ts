@@ -56,8 +56,8 @@ export function replaceImportsWith(ast: t.File, nodes: Node[]): t.File {
   return ast;
 }
 
-export function fromAst(ast: t.File): string {
-  const code = transformFromAstSync(ast)?.code ?? "";
+export function fromAst(ast: t.File, initialCode: string): string {
+  const code = transformFromAstSync(ast, initialCode)?.code ?? "";
   return code
     .split("\n")
     .filter(x => x.trim() !== "")

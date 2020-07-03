@@ -32,6 +32,18 @@
     "configuration": {
       "title": "Imports Organizator",
       "properties": {
+        "import-organizer.mixType": {
+          "type": "string",
+          "default": "es_to_top",
+          "enum": [
+            "mixed",
+            "es_to_top"
+          ],
+          "enumDescriptions": [
+            "CommonJS and Es imports are mixed, sorting and grouping are done based on sortOrder config",
+            "At first es imports are grouped and sorted based on sortOrder config, and then commonJS"
+          ]
+        },
         "import-organizer.sortOrder": {
           "type": "array",
           "scope": "resource",

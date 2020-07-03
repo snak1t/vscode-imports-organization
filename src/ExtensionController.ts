@@ -92,7 +92,7 @@ export class ExtensionController implements vscode.Disposable {
   };
 
   private processImportNodes(file: File, importNodes: Node[]): [false] | [true, string] {
-    const nodes = sortImports(importNodes, this.config.getConfiguration());
+    const nodes = sortImports(importNodes, this.config.getConfiguration(), this.config.getMixType());
     const hasChanged = hasImportsStructureChanged(importNodes, nodes);
     if (hasChanged) {
       return [true, fromAst(replaceImportsWith(file, nodes))]; // ?

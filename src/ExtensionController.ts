@@ -4,11 +4,14 @@ import { sortImports, hasImportsStructureChanged } from "./SortImports";
 import { File } from "@babel/types";
 import { Node } from "./types/Node";
 import { Config } from "./Config";
+import { FoldingDelegate, Folding } from "./Folding";
 
 const DISABLE_KEYWORD = "imports-organization: disable";
 
-export class ExtensionController implements vscode.Disposable {
+export class ExtensionController implements vscode.Disposable, FoldingDelegate {
   disposables: vscode.Disposable[] = [];
+
+  foldingController: Folding;
 
   constructor(private readonly config: Config) {
     const onDidSaveDisposable = vscode.workspace.onDidSaveTextDocument(async document => {
@@ -33,18 +36,34 @@ export class ExtensionController implements vscode.Disposable {
 
     this.registerCommands();
     this.disposables.push(onDidSaveDisposable);
+
+    this.foldingController = new Folding({ useDelegate: this });
+    this.disposables.push(this.foldingController);
+  }
+
+  public getFileAndImportNodes(textDocument?: vscode.TextDocument) {
+    let document = textDocument ?? vscode.window.activeTextEditor?.document;
+    if (document) {
+      const textContent = document.getText();
+      const file = toAst(textContent);
+      if (file === null) {
+        return null;
+      }
+      const importNodes = getAllImportNodes(file);
+      return [file, importNodes, textContent] as const;
+    }
+    return null;
   }
 
   private changeDocumentContent = (textDocument: vscode.TextDocument): vscode.TextEdit | null => {
     if (this.isExtensionDisabledForDocument(textDocument)) {
       return null;
     }
-    const textContent = textDocument.getText();
-    const file = toAst(textContent);
-    if (file === null) {
+    const result = this.getFileAndImportNodes(textDocument);
+    if (result === null) {
       return null;
     }
-    const importNodes = getAllImportNodes(file);
+    const [file, importNodes, textContent] = result;
     const [shouldChangeContent, proccessedContent] = this.processImportNodes(file, importNodes, textContent);
     if (!shouldChangeContent || !proccessedContent) {
       return null;
@@ -113,7 +132,7 @@ export class ExtensionController implements vscode.Disposable {
     const nodes = sortImports(importNodes, this.config.getConfiguration(), this.config.getMixType());
     const hasChanged = hasImportsStructureChanged(importNodes, nodes);
     if (hasChanged) {
-      return [true, fromAst(replaceImportsWith(file, nodes ), initialCode)]; // ?
+      return [true, fromAst(replaceImportsWith(file, nodes), initialCode)]; // ?
     }
     return [false];
   }
@@ -130,5 +149,19 @@ export class ExtensionController implements vscode.Disposable {
     const wEdit = new vscode.WorkspaceEdit();
     wEdit.set(uri, edits);
     return await vscode.workspace.applyEdit(wEdit);
+  }
+
+  getFoldingRange(): vscode.Range | null {
+    const result = this.getFileAndImportNodes();
+    if (result === null) {
+      return null;
+    }
+    const [, importNodes] = result;
+    return new vscode.Range(
+      importNodes[0].getLinePositions()[0],
+      0,
+      importNodes[importNodes.length - 1].getLinePositions()[1],
+      0,
+    );
   }
 }

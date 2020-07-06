@@ -1,30 +1,33 @@
 import * as vscode from "vscode";
 import { Disposable } from "vscode";
 
+export interface FoldingDelegate {
+  getFoldingRange(): vscode.Range | null;
+}
+
 export class Folding implements Disposable {
   editor?: vscode.TextEditor = vscode.window.activeTextEditor;
 
   disposables: Disposable[] = [];
 
-  constructor() {
-    if (this.editor) {
-      this.foldImports();
-    }
+  delegate: FoldingDelegate;
 
+  constructor({ useDelegate }: { useDelegate: FoldingDelegate }) {
+    this.delegate = useDelegate;
     this.disposables.push(
-      vscode.window.onDidChangeActiveTextEditor(editor => {
-        this.editor = editor;
-        this.foldImports();
-      }),
+      vscode.languages.registerFoldingRangeProvider(
+        ["javascript", "typescript", "javascriptreact", "typescriptreact"],
+        {
+          provideFoldingRanges: () => {
+            const range = this.delegate.getFoldingRange();
+            if (range === null) {
+              return [];
+            }
+            return [new vscode.FoldingRange(range.start.line, range.end.line, vscode.FoldingRangeKind.Imports)];
+          },
+        },
+      ),
     );
-  }
-
-  foldImports() {
-    vscode.commands.executeCommand("editor.fold", {
-      levels: 1,
-      direction: "up",
-      selectionLines: [0],
-    });
   }
 
   dispose() {

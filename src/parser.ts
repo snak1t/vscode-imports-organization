@@ -1,23 +1,23 @@
 import { parse, ParserOptions } from "@babel/parser";
-import * as t from "@babel/types";
 import { transformFromAstSync } from "@babel/core";
 
 import traverse from "@babel/traverse";
 import { createNode, isModuleStatement } from "./Modules";
 import { Node } from "./types/Node";
+import { File, StatementNode } from "./statement.utils";
 
 export const parsingOptions = {
   plugins: ["typescript", "jsx"],
   sourceType: "module",
 };
 
-const codeToAst = (code: string): t.File =>
+const codeToAst = (code: string): File =>
   parse(code, <ParserOptions>{
     startLine: 0,
     ...parsingOptions,
   });
 
-export function toAst(code: string): t.File | null {
+export function toAst(code: string): File | null {
   try {
     return codeToAst(code);
   } catch (error) {
@@ -25,7 +25,7 @@ export function toAst(code: string): t.File | null {
   }
 }
 
-export function getAllImportNodes(ast: t.File): Node[] {
+export function getAllImportNodes(ast: File): Node[] {
   try {
     return ast.program.body.reduce((importModules, statement) => {
       const node = createNode(statement);
@@ -39,7 +39,7 @@ export function getAllImportNodes(ast: t.File): Node[] {
   }
 }
 
-export function replaceImportsWith(ast: t.File, nodes: Node[]): t.File {
+export function replaceImportsWith(ast: File, nodes: Node[]): File {
   traverse(ast, {
     enter(path) {
       if (isModuleStatement(path.node)) {
@@ -47,7 +47,7 @@ export function replaceImportsWith(ast: t.File, nodes: Node[]): t.File {
         // all previous elements will remain as is
         // like comments, esling disable statement or etc.
         path.getAllNextSiblings().forEach(x => x.remove());
-        const x: t.Node[] = nodes.map(imd => imd.makeNode());
+        const x: StatementNode[] = nodes.map(imd => imd.makeNode());
         path.replaceWithMultiple(x);
         path.stop();
       }
@@ -56,7 +56,7 @@ export function replaceImportsWith(ast: t.File, nodes: Node[]): t.File {
   return ast;
 }
 
-export function fromAst(ast: t.File, initialCode: string): string {
+export function fromAst(ast: File, initialCode: string): string {
   const code = transformFromAstSync(ast, initialCode)?.code ?? "";
   return code
     .split("\n")

@@ -1,4 +1,4 @@
-import * as t from "@babel/types";
+import * as t from "../statement.utils";
 import { Node } from "../types/Node";
 
 export class EsModule implements Node {
@@ -8,7 +8,7 @@ export class EsModule implements Node {
     return this.importDeclarationNode.source.value;
   }
 
-  makeNode(): t.Node {
+  makeNode(): t.StatementNode {
     return t.importDeclaration(this.importDeclarationNode.specifiers, this.importDeclarationNode.source);
   }
 

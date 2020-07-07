@@ -1,5 +1,5 @@
-import * as t from "@babel/types";
 import { Node } from "./types/Node";
+import { addComment, noop, StatementNode } from "./statement.utils";
 
 export class EmptyLine implements Node {
   getLinePositions(): [number, number] {
@@ -9,7 +9,7 @@ export class EmptyLine implements Node {
     return "EmptyBlock";
   }
 
-  makeNode(): t.Node {
-    return t.addComment(t.noop(), "leading", "TOBEDELETED");
+  makeNode(): StatementNode {
+    return addComment(noop(), "leading", "TOBEDELETED");
   }
 }

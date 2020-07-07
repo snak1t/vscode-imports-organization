@@ -1,4 +1,4 @@
-import * as t from "@babel/types";
+import * as t from "../statement.utils";
 
 import { Node } from "../types/Node";
 
@@ -15,6 +15,6 @@ export const createNode = (statement: t.Statement): Node | null => {
   return null;
 };
 
-export const isModuleStatement = (statement: t.Node): boolean => {
+export const isModuleStatement = (statement: t.StatementNode): boolean => {
   return EsModule.is((statement as unknown) as t.Statement) || CommonJsModule.is((statement as unknown) as t.Statement);
 };

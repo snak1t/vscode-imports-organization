@@ -1,4 +1,4 @@
-import * as t from "@babel/types";
+import * as t from "../statement.utils";
 
 import { ConfigEntry, ModulesMixType } from "../Config";
 import { toAst, getAllImportNodes, fromAst, replaceImportsWith } from "../parser";

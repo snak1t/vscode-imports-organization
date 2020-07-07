@@ -1,5 +1,5 @@
-import * as t from "@babel/types";
 import { Node } from "../types/Node";
+import * as t from "../statement.utils";
 
 const isMemberOrCallExpression = (expression: t.Expression): expression is t.MemberExpression | t.CallExpression => {
   return t.isCallExpression(expression) || t.isMemberExpression(expression);
@@ -38,7 +38,7 @@ export class CommonJsModule implements Node {
     return (node?.arguments[0] as any).value as string;
   }
 
-  makeNode(): t.Node {
+  makeNode(): t.StatementNode {
     if (t.isVariableDeclaration(this.statement)) {
       return t.variableDeclaration(this.statement.kind, this.statement.declarations);
     }

@@ -1,10 +1,10 @@
 import * as vscode from "vscode";
 import { toAst, getAllImportNodes, replaceImportsWith, fromAst } from "./parser";
 import { sortImports, hasImportsStructureChanged } from "./SortImports";
-import { File } from "@babel/types";
 import { Node } from "./types/Node";
 import { Config } from "./Config";
 import { FoldingDelegate, Folding } from "./Folding";
+import { File } from "./statement.utils";
 
 const DISABLE_KEYWORD = "imports-organization: disable";
 

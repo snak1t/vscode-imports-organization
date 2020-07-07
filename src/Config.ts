@@ -1,5 +1,4 @@
 import * as vscode from "vscode";
-import { Disposable } from "vscode";
 
 export type ConfigEntryTestFn = (source: string) => boolean;
 
@@ -33,9 +32,9 @@ const configKeywordMap: Map<string, ConfigEntryTestFn> = new Map([
   ],
 ]);
 
-export class Config implements Disposable {
+export class Config implements vscode.Disposable {
   private _config: ConfigEntry[] = [];
-  private disposable?: Disposable;
+  private disposable?: vscode.Disposable;
   private _mixType: ModulesMixType = "mixed";
   public isFormatOnSaveEnabled: boolean = false;
 
